@@ -1,0 +1,33 @@
+{
+    "name": "hazuki3417/php-selen-dev",
+    "description": "",
+    "type": "library",
+    "keywords": [],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "takashi kudo",
+            "email": "hazuki3417@gmail.com",
+            "role": "Developer"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Selen\\Dev\\": "src"
+        }
+    },
+    "config": {
+        "platform": {
+            "php": "7.2"
+        }
+    },
+    "require": {
+        "php": ">=7.2",
+        "hazuki3417/php-selen": "*"
+    },
+    "require-dev": {
+        "php": ">=7.2",
+        "phpunit/phpunit": "^8.5",
+        "friendsofphp/php-cs-fixer": "^3.3"
+    }
+}

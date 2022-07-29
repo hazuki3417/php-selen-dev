@@ -1,0 +1,14 @@
+version: "3.0"
+
+services:
+  composer:
+    image: composer
+    volumes:
+      - ./:/app
+    tty: true
+
+  php-documentor:
+    image: phpdoc/phpdoc:latest
+    volumes:
+      - ./:/data
+    tty: true

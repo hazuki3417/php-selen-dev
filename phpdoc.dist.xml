@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<phpdocumentor
+    configVersion="3"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns="https://www.phpdoc.org"
+    xsi:noNamespaceSchemaLocation="https://docs.phpdoc.org/latest/phpdoc.xsd"
+>
+  <title>Selen</title>
+  <paths>
+    <output>docs/phpdoc</output>
+    <cache>.cache/phpdoc/</cache>
+  </paths>
+  <version number="3.0.0">
+    <api>
+      <source dsn=".">
+        <path>src</path>
+      </source>
+      <output>api</output>
+      <extensions>
+        <extension>php</extension>
+      </extensions>
+      <default-package-name>Selen</default-package-name>
+      <markers>
+        <marker>TODO</marker>
+        <marker>FIX</marker>
+        <marker>FIXME</marker>
+      </markers>
+    </api>
+  </version>
+  <template name="default"/>
+</phpdocumentor>
