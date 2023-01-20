@@ -7,7 +7,7 @@ use Selen\Dev\Measurement\Performance;
 $perf1 = new Performance();
 
 $perf1->set(function () {
-    $sum = '1';
+    $sum    = '1';
     $result = 0;
 
     for ($i = 1; $i < 10000; ++$i) {
