@@ -18,14 +18,14 @@ class State
     /**
      * @var bool メモリ使用量、実行時間を保持する配列
      */
-    private $state_flg = false;
+    private $stateFlg = false;
 
     /**
      * ストップウォッチの計測を開始します。
      */
     public function run()
     {
-        $this->state_flg = true;
+        $this->stateFlg = true;
     }
 
     /**
@@ -33,7 +33,7 @@ class State
      */
     public function stop()
     {
-        $this->state_flg = false;
+        $this->stateFlg = false;
     }
 
     /**
@@ -43,6 +43,6 @@ class State
      */
     public function get()
     {
-        return $this->state_flg;
+        return $this->stateFlg;
     }
 }
