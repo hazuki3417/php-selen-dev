@@ -4,8 +4,10 @@ include dirname(__DIR__) . '/vendor/autoload.php';
 
 use Selen\Dev\Measurement\Performance;
 
-$perf1 = new Performance();
 
+echo "\n";
+
+$perf1 = new Performance();
 $perf1->set(function () {
     $sum    = '1';
     $result = 0;
@@ -13,15 +15,18 @@ $perf1->set(function () {
     for ($i = 1; $i < 10000; ++$i) {
         $result += $sum;
     }
-})->start(8);
+})->start(8)->output();
 
-// $perf2 = new Performance();
+echo "\n";
 
-// $perf2->set(function () {
-//     $sum = 1;
-//     $result = 0;
+$perf2 = new Performance();
+$perf2->set(function () {
+    $sum = 1;
+    $result = 0;
 
-//     for ($i = 1; $i < 10000; ++$i) {
-//         $result += $sum;
-//     }
-// })->start(8);
+    for ($i = 1; $i < 10000; ++$i) {
+        $result += $sum;
+    }
+})->start(8)->output();
+
+echo "\n";
