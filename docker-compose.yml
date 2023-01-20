@@ -20,9 +20,13 @@ services:
     volumes:
       - ./:/app
     tty: true
+    profiles:
+      - task
 
   php-documentor:
     image: phpdoc/phpdoc:latest
     volumes:
       - ./:/data
     tty: true
+    profiles:
+      - task
