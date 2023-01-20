@@ -75,7 +75,7 @@ class Stopwatch
      */
     public function output()
     {
-        $output = new RecordTable($this->queue);
+        $output  = new RecordTable($this->queue);
         $records = $output->create();
 
         foreach ($records as $record) {

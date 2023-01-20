@@ -34,7 +34,7 @@ class Record
     public function __construct(int $memory, float $time)
     {
         $this->memory = $memory;
-        $this->time = $time;
+        $this->time   = $time;
     }
 
     /**
