@@ -19,11 +19,6 @@ use Selen\Data\Structure\QueueInterface;
 class Performance
 {
     /**
-     * @var State インスタンスを保持する変数
-     */
-    private $state;
-
-    /**
      * @var QueueInterface インスタンスを保持する変数
      */
     private $queue;
@@ -33,8 +28,13 @@ class Performance
      */
     public function __construct()
     {
-        $this->state = new State();
         $this->queue = new Queue(Record::class);
+        /**
+         * NOTE: 意図的に初期化前に計測レコードの追加処理を行っています
+         *       - ここで一旦レコードを追加しないと1回目の計測時間が大きくなる。
+         *       - 必要な処理の読み込みなどが発生していることが要因と思われる。
+         */
+        $this->addRecord();
         $this->init();
     }
 
@@ -45,7 +45,7 @@ class Performance
      *
      * @return Performance
      */
-    public function set($process)
+    public function set(callable $process)
     {
         $this->process = $process;
         return $this;
@@ -53,30 +53,26 @@ class Performance
 
     /**
      * 計測を開始します。
-     *
-     * @param mixed $number
      */
-    public function start($number = 1)
+    public function start(int $number = 1)
     {
-        // コールバックメソッドを取得
-        $method = $this->process;
-
-        $this->state->run();
-
-        $this->addRecord();
-
-        for ($i = 0; $i < $number; ++$i) {
-            // コールバックメソッド実行
-            $method();
+        for ($inc = 0; $inc < $number; ++$inc) {
+            if ($inc === 0) {
+                $this->addRecord();
+            }
+            ($this->process)();
             $this->addRecord();
         }
+        return $this;
+    }
 
-        $this->state->stop();
-
-        // TODO: 平均値を計算して出力する処理を実装する
-
+    /**
+     * 計測結果を出力します。
+     */
+    public function output()
+    {
         // 計測結果を出力
-        $output = new RecordTable($this->queue);
+        $output  = new RecordTable($this->queue);
         $records = $output->create();
 
         foreach ($records as $record) {
@@ -85,21 +81,19 @@ class Performance
     }
 
     /**
-     * Stopwatchの内部情報を初期化します。
+     * 計測情報を初期化します。
      */
     private function init()
     {
-        $this->state->stop();
         $this->queue->clear();
     }
 
     /**
-     * 計測記録を追加します。
+     * 計測情報を追加します。
      */
     private function addRecord()
     {
-        $record = new Record($this->nowMemory(), $this->nowTime());
-        $this->queue->enqueue($record);
+        $this->queue->enqueue(new Record($this->nowMemory(), $this->nowTime()));
     }
 
     /**
@@ -109,7 +103,7 @@ class Performance
      */
     private function nowMemory()
     {
-        return memory_get_peak_usage();
+        return memory_get_peak_usage(true);
     }
 
     /**
@@ -119,6 +113,6 @@ class Performance
      */
     private function nowTime()
     {
-        return microtime(true);
+        return (float) hrtime(true);
     }
 }

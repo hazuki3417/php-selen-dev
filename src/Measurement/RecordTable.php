@@ -10,6 +10,7 @@
 
 namespace Selen\Dev\Measurement;
 
+use Selen\Data\Memo\Str\MaxLength;
 use Selen\Data\Structure\QueueInterface;
 
 /**
@@ -17,18 +18,6 @@ use Selen\Data\Structure\QueueInterface;
  */
 class RecordTable
 {
-    public const OUTPUT_TYPE_HTML = 'html';
-    public const OUTPUT_TYPE_LOG = 'log';
-    public const OUTPUT_TYPE_TERMINAL = 'terminal';
-
-    public const MESSAGE_FORMAT_HEADER = '| %-12s | %16s | %16s | %14s | %14s |';
-    public const MESSAGE_FORMAT_RESULT = '| %-12s | %16.12f | %16.12f | %14.3f | %14.3f |';
-
-    /**
-     * @var string 改行コードを保持する変数
-     */
-    private $new_line = "\n";
-
     /**
      * @var QueueInterface インスタンスを保持する変数
      */
@@ -43,88 +32,134 @@ class RecordTable
     }
 
     /**
-     * 計測結果の出力形式を指定します。
-     *
-     * @param string $type
-     *
-     * @throws invalidArgumentException 対応していない出力形式を指定したときに発生します
-     */
-    public function outputType($type)
-    {
-        switch ($type) {
-            case self::OUTPUT_TYPE_TERMINAL:
-                $this->new_line = "\n";
-                break;
-                // case self::OUTPUT_TYPE_HTML:
-            //     $this->new_line = "</br>";
-            //     break;
-                // case self::OUTPUT_TYPE_LOG:
-            //     // phpのエラーログ設定を一時的に変更
-            //     ini_set('log_errors', 'On');
-            //     ini_set('error_log', self::PHP_ERROR_LOG_PATH);
-            //     break;
-            default:
-                throw new \InvalidArgumentException('The value is incorrect. $type');
-        }
-    }
-
-    /**
      * 計測結果を出力します。
      *
      * @return array
      */
     public function create()
     {
-        $records = [];
-        $records[] = sprintf(
-            self::MESSAGE_FORMAT_HEADER . $this->new_line,
+        $convertedRecords = $this->convert();
+
+        $header = [
             '',
             'process(1)[s]',
             'process(t)[s]',
             'memory(1)[MB]',
-            'memory(t)[MB]'
-        );
+            'memory(t)[MB]',
+        ];
 
-        // 最初の記録は基準値として利用するため先に取得
-        $record = null;
+        /**
+         * 最大長の文字列を取得する処理
+         */
+        $performanceMaxLength = new MaxLength();
+        $processOneMaxLength  = new MaxLength();
+        $processSumMaxLength  = new MaxLength();
+        $memoryOneMaxLength   = new MaxLength();
+        $memorySumMaxLength   = new MaxLength();
 
-        try {
-            $record = $this->queue->dequeue();
-        } catch (\Exception $e) {
-            return $records;
+        $performanceMaxLength->set($header[0]);
+        $processOneMaxLength->set($header[1]);
+        $processSumMaxLength->set($header[2]);
+        $memoryOneMaxLength->set($header[3]);
+        $memorySumMaxLength->set($header[4]);
+
+        foreach ($convertedRecords as $record) {
+            $performanceMaxLength->set($record[0]);
+            $processOneMaxLength->set($record[1]);
+            $processSumMaxLength->set($record[2]);
+            $memoryOneMaxLength->set($record[3]);
+            $memorySumMaxLength->set($record[4]);
         }
 
-        $base_time = $record->getTime();
-        $base_memory = $record->getMemory();
-        $prev_time = $base_time;
-        $prev_memory = $base_memory;
+        $performanceStrLength = \mb_strlen($performanceMaxLength->get());
+        $processOneStrLength  = \mb_strlen($processOneMaxLength->get());
+        $processSumStrLength  = \mb_strlen($processSumMaxLength->get());
+        $memoryOneStrLength   = \mb_strlen($memoryOneMaxLength->get());
+        $memorySumStrLength   = \mb_strlen($memorySumMaxLength->get());
 
-        // 2つ目から基準値との差分を出力する
+        $outputRecords = [];
+
+        $padStr    = ' ';
+        $separator = '|';
+        $newLine   = "\n";
+
+        $paddingHeader = [
+            \str_pad($header[0], $performanceStrLength, $padStr, \STR_PAD_BOTH),
+            \str_pad($header[1], $processOneStrLength, $padStr, \STR_PAD_BOTH),
+            \str_pad($header[2], $processSumStrLength, $padStr, \STR_PAD_BOTH),
+            \str_pad($header[3], $memoryOneStrLength, $padStr, \STR_PAD_BOTH),
+            \str_pad($header[4], $memorySumStrLength, $padStr, \STR_PAD_BOTH),
+        ];
+
+        $paddingBorder = [
+            \str_pad('', $performanceStrLength, '-', \STR_PAD_BOTH),
+            \str_pad('', $processOneStrLength, '-', \STR_PAD_BOTH),
+            \str_pad('', $processSumStrLength, '-', \STR_PAD_BOTH),
+            \str_pad('', $memoryOneStrLength, '-', \STR_PAD_BOTH),
+            \str_pad('', $memorySumStrLength, '-', \STR_PAD_BOTH),
+        ];
+
+        $outputHeader = $separator . \implode($separator, $paddingHeader) . $separator . $newLine;
+
+        $outputBorder = $separator . \implode($separator, $paddingBorder) . $separator . $newLine;
+
+        foreach ($convertedRecords as $record) {
+            $paddingRecord = [
+                \str_pad($record[0], $performanceStrLength, $padStr, \STR_PAD_RIGHT),
+                \str_pad($record[1], $processOneStrLength, $padStr, \STR_PAD_LEFT),
+                \str_pad($record[2], $processSumStrLength, $padStr, \STR_PAD_LEFT),
+                \str_pad($record[3], $memoryOneStrLength, $padStr, \STR_PAD_LEFT),
+                \str_pad($record[4], $memorySumStrLength, $padStr, \STR_PAD_LEFT),
+            ];
+
+            $outputRecords[] = $separator . \implode($separator, $paddingRecord) . $separator . $newLine;
+        }
+
+        return \array_merge([$outputHeader], [$outputBorder], $outputRecords);
+    }
+
+    /**
+     * 計測結果を出力用に変換します
+     */
+    private function convert()
+    {
+        $mesRecord = $this->queue->dequeue();
+
+        $baseTime   = $mesRecord->getTime();
+        $baseMemory = $mesRecord->getMemory();
+        $prevTime   = $baseTime;
+        $prevMemory = $baseMemory;
+
         $count = $this->queue->size();
 
         for ($i = 0; $i < $count; ++$i) {
             $record = $this->queue->dequeue();
 
-            $target_time = $record->getTime();
-            $target_memory = $record->getMemory();
+            $targetTime   = $record->getTime();
+            $targetMemory = $record->getMemory();
 
-            $lap_time = $target_time - $prev_time;
-            $lap_memory = $target_memory - $prev_memory;
-            $diff_time = $target_time - $base_time;
-            $diff_memory = $target_memory - $base_memory;
+            /**
+             * NOTE: time -> 正数表現のナノ秒を小数表現のナノ秒に変換
+             *       memory -> バイト表現をメガバイト表現に変換
+             */
+            $lapTime    = ($targetTime - $prevTime)     / 1e+9;
+            $lapMemory  = ($targetMemory - $prevMemory) / 1e+6;
+            $diffTime   = ($targetTime - $baseTime)     / 1e+9;
+            $diffMemory = ($targetMemory - $baseMemory) / 1e+6;
 
-            $records[] = sprintf(
-                self::MESSAGE_FORMAT_RESULT . $this->new_line,
+            $records[] = [
                 \sprintf('lap(%s)', $i + 1),
-                $lap_time,
-                $diff_time,
-                $lap_memory,
-                $diff_memory
-            );
+                \sprintf('%.9f', $lapTime),
+                \sprintf('%.9f', $diffTime),
+                \sprintf('%.3f', $lapMemory),
+                \sprintf('%.3f', $diffMemory),
+            ];
+
             // 前回値を保持
-            $prev_time = $target_time;
-            $prev_memory = $target_memory;
+            $prevTime   = $targetTime;
+            $prevMemory = $targetMemory;
         }
+
         return $records;
     }
 }
