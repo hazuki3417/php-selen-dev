@@ -1,8 +1,22 @@
 version: "3.0"
 
 services:
+  php-xdebug:
+    image: webdevops/php-dev:8.1
+    stdin_open: true
+    tty: true
+    volumes:
+      - ./:/var/www/html
+    working_dir: /var/www/html
+    environment:
+      - XDEBUG_MODE=debug
+      - XDEBUG_START_WITH_REQUEST=yes
+      - XDEBUG_CLIENT_HOST=host.docker.internal
+      - XDEBUG_CLIENT_PORT=9003
+      - XDEBUG_IDE_KEY=VSCODE
+
   composer:
-    image: composer
+    image: composer:latest
     volumes:
       - ./:/app
     tty: true

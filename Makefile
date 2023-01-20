@@ -8,7 +8,7 @@ all:
 composer:
 	docker-compose run --rm composer ${COMMAND}
 
-package-install:COMMAND +=install
+package-install:COMMAND +=install --no-suggest
 package-install: composer;
 
 package-dumpautoload:COMMAND +=dumpautoload
@@ -17,20 +17,25 @@ package-dumpautoload: composer;
 runner:
 	docker run -t --rm -v ${PWD}:/var/www/html -w /var/www/html php:${IMAGE_TAG} ${COMMAND}
 
-generate-api-coverage: IMAGE_TAG +=7.2-alpine
+php-cs-fixer: IMAGE_TAG +=8.0-alpine
+php-cs-fixer: COMMAND +=php vendor/bin/php-cs-fixer fix -vvv --diff
+php-cs-fixer: runner;
+
+generate-api-coverage: IMAGE_TAG +=8.0-alpine
 generate-api-coverage: COMMAND +=phpdbg -qrr vendor/bin/phpunit -c phpunit.coverage.xml
 generate-api-coverage: runner;
 
 generate-api-document:
 	docker-compose run --rm php-documentor
 
+test-verify: IMAGE_TAG +=alpine
+test-verify: COMMAND +=php vendor/bin/phpunit --group=verify
+test-verify: runner;
+
 test-all:
 	make test-php-latest && \
 	make test-php-8.1 && \
-	make test-php-8.0 && \
-	make test-php-7.4 && \
-	make test-php-7.3 && \
-	make test-php-7.2
+	make test-php-8.0
 
 test-php-latest: IMAGE_TAG +=alpine
 test-php-latest: COMMAND +=php vendor/bin/phpunit
@@ -43,15 +48,3 @@ test-php-8.1: runner;
 test-php-8.0: IMAGE_TAG +=8.0-alpine
 test-php-8.0: COMMAND +=php vendor/bin/phpunit
 test-php-8.0: runner;
-
-test-php-7.4: IMAGE_TAG +=7.4-alpine
-test-php-7.4: COMMAND +=php vendor/bin/phpunit
-test-php-7.4: runner;
-
-test-php-7.3: IMAGE_TAG +=7.3-alpine
-test-php-7.3: COMMAND +=php vendor/bin/phpunit
-test-php-7.3: runner;
-
-test-php-7.2: IMAGE_TAG +=7.2-alpine
-test-php-7.2: COMMAND +=php vendor/bin/phpunit
-test-php-7.2: runner;
