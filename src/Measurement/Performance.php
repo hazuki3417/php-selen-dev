@@ -18,6 +18,7 @@ use Selen\Data\Structure\QueueInterface;
  */
 class Performance
 {
+    private $process;
     /**
      * @var QueueInterface インスタンスを保持する変数
      */
